@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="hi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#10251f">
+<title>My Voice AI</title>
+<style>
+:root{color-scheme:dark;--bg:#0b1512;--panel:#12231d;--line:#294238;--text:#f2f7f4;--muted:#a7b9b0;--green:#56d39b}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at top,#18392d 0,#0b1512 55%);font:16px system-ui,-apple-system,Segoe UI,sans-serif;color:var(--text);min-height:100vh}
+main{max-width:720px;margin:auto;padding:24px 16px 48px}.brand{display:flex;align-items:center;gap:12px;margin:8px 0 24px}.logo{width:48px;height:48px;border-radius:15px;background:linear-gradient(135deg,#56d39b,#1e8060);display:grid;place-items:center;color:#062216;font-size:25px;font-weight:800}.brand h1{font-size:23px;margin:0}.brand p{margin:3px 0 0;color:var(--muted);font-size:13px}
+.card{background:rgba(18,35,29,.96);border:1px solid var(--line);border-radius:20px;padding:18px;margin:14px 0;box-shadow:0 12px 35px #0002}.step{color:var(--green);font-size:12px;font-weight:800;letter-spacing:.12em;text-transform:uppercase}.card h2{font-size:18px;margin:6px 0 8px}.hint{color:var(--muted);font-size:13px;line-height:1.5;margin:5px 0 14px}
+input[type=file],textarea{width:100%;border:1px solid #355447;background:#0b1914;color:var(--text);border-radius:12px;padding:12px;font:inherit}textarea{min-height:150px;resize:vertical;line-height:1.6}input[type=file]{font-size:13px}
+button{border:0;border-radius:12px;padding:13px 16px;font:inherit;font-weight:700;cursor:pointer}.primary{background:var(--green);color:#062216;width:100%;margin-top:12px}.secondary{background:#20392e;color:var(--text);border:1px solid #3b5b4b}.row{display:flex;gap:10px;flex-wrap:wrap}.row>*{flex:1}.status{margin-top:12px;color:var(--muted);font-size:13px;line-height:1.5}.warning{border-left:3px solid #e8c16c;padding:10px 12px;background:#2c281b;color:#e9ddbd;border-radius:6px;font-size:13px;line-height:1.5}.filelabel{display:block;margin-bottom:8px;font-size:14px}.foot{text-align:center;color:#82988d;font-size:12px;padding:16px}
+audio{width:100%;margin-top:10px} .hidden{display:none!important}
+</style>
+</head>
+<body>
+<main>
+<header class="brand"><div class="logo">V</div><div><h1>My Voice AI</h1><p>अपनी आवाज़ • अपनी स्क्रिप्ट</p></div></header>
+<div class="warning">यह My Voice AI है। आपकी पहले से क्लोन की गई आवाज़ बैकएंड में Voice ID के ज़रिए इस्तेमाल होगी। API key सुरक्षित रूप से सर्वर पर रखी जाएगी।</div>
+<section class="card">
+<div class="step">STEP 01</div><h2>क्लोन की गई आवाज़</h2>
+<p class="hint">आपकी Voice ID सर्वर पर सेट की जाएगी। हर बार सैंपल अपलोड करने की ज़रूरत नहीं है।</p>
+<div id="voiceStatus" class="status">Voice ID बैकएंड की Environment Variables में सेट करें।</div>
+</section>
+<section class="card">
+<div class="step">STEP 02</div><h2>हिंदी टेक्स्ट लिखें</h2>
+<p class="hint">अपनी वीडियो स्क्रिप्ट यहाँ पेस्ट करें।</p>
+<textarea id="script" maxlength="5000" placeholder="नमस्कार दोस्तों, स्वागत है आपका हमारे चैनल पर..."></textarea>
+<div class="status"><span id="count">0</span>/5000 अक्षर</div>
+</section>
+<section class="card">
+<div class="step">STEP 03</div><h2>आवाज़ जनरेट करें</h2>
+<p class="hint">आपका टेक्स्ट Fish Audio API को भेजा जाएगा और MP3 ऑडियो वापस मिलेगा।</p>
+<button class="primary" id="generate">आवाज़ बनाएं</button>
+<div id="result" class="status" role="status">टेक्स्ट लिखकर आवाज़ बनाएं।</div>
+</section>
+<div class="foot">My Voice AI • मोबाइल-फ्रेंडली डेमो</div>
+</main>
+<script>
+const scriptBox=document.getElementById('script');
+const count=document.getElementById('count');
+const result=document.getElementById('result');
+let currentAudioUrl=null;
+scriptBox.addEventListener('input',()=>count.textContent=scriptBox.value.length);
+document.getElementById('generate').addEventListener('click', async ()=>{
+  const text=scriptBox.value.trim();
+  if(!text){result.textContent='पहले हिंदी टेक्स्ट लिखें।';return;}
+  const btn=document.getElementById('generate');
+  btn.disabled=true; btn.textContent='आवाज़ बन रही है…'; result.textContent='Fish Audio से कनेक्ट हो रहा है…';
+  try {
+    const response=await fetch('/api/tts',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text})});
+    if(!response.ok){let message='ऑडियो नहीं बन पाया।';try{const data=await response.json();message=data.detail||message;}catch(_){}throw new Error(message);}
+    const blob=await response.blob();
+    if(currentAudioUrl)URL.revokeObjectURL(currentAudioUrl);
+    currentAudioUrl=URL.createObjectURL(blob);
+    const audio=document.createElement('audio');audio.controls=true;audio.src=currentAudioUrl;
+    const download=document.createElement('a');download.href=currentAudioUrl;download.download='my-voice.mp3';download.textContent='MP3 डाउनलोड करें';download.style.display='inline-block';download.style.marginTop='10px';download.style.color='#56d39b';download.style.fontWeight='700';
+    result.replaceChildren(document.createTextNode('ऑडियो तैयार है।'),document.createElement('br'),audio,document.createElement('br'),download);
+  } catch(e) {result.textContent='समस्या: '+e.message;}
+  finally {btn.disabled=false;btn.textContent='आवाज़ बनाएं';}
+});
+fetch('/health').then(r=>r.json()).then(data=>{
+ const status=document.getElementById('voiceStatus');
+ if(data.voice_id_configured) status.textContent='क्लोन की गई Voice ID सर्वर पर सेट है।';
+ if(!data.voice_id_configured) status.textContent='Render Environment Variables में FISH_VOICE_ID सेट करना बाकी है।';
+}).catch(()=>{});
+</script>
+</body>
+</html>

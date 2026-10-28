@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="hi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#10251f">
+<title>My Voice AI</title>
+<style>
+:root{color-scheme:dark;--bg:#0b1512;--panel:#12231d;--line:#294238;--text:#f2f7f4;--muted:#a7b9b0;--green:#56d39b}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at top,#18392d 0,#0b1512 55%);font:16px system-ui,-apple-system,Segoe UI,sans-serif;color:var(--text);min-height:100vh}
+main{max-width:720px;margin:auto;padding:24px 16px 48px}.brand{display:flex;align-items:center;gap:12px;margin:8px 0 24px}.logo{width:48px;height:48px;border-radius:15px;background:linear-gradient(135deg,#56d39b,#1e8060);display:grid;place-items:center;color:#062216;font-size:25px;font-weight:800}.brand h1{font-size:23px;margin:0}.brand p{margin:3px 0 0;color:var(--muted);font-size:13px}
+.card{background:rgba(18,35,29,.96);border:1px solid var(--line);border-radius:20px;padding:18px;margin:14px 0;box-shadow:0 12px 35px #0002}.step{color:var(--green);font-size:12px;font-weight:800;letter-spacing:.12em;text-transform:uppercase}.card h2{font-size:18px;margin:6px 0 8px}.hint{color:var(--muted);font-size:13px;line-height:1.5;margin:5px 0 14px}
+input[type=file],textarea{width:100%;border:1px solid #355447;background:#0b1914;color:var(--text);border-radius:12px;padding:12px;font:inherit}textarea{min-height:150px;resize:vertical;line-height:1.6}input[type=file]{font-size:13px}
+button{border:0;border-radius:12px;padding:13px 16px;font:inherit;font-weight:700;cursor:pointer}.primary{background:var(--green);color:#062216;width:100%;margin-top:12px}.secondary{background:#20392e;color:var(--text);border:1px solid #3b5b4b}.row{display:flex;gap:10px;flex-wrap:wrap}.row>*{flex:1}.status{margin-top:12px;color:var(--muted);font-size:13px;line-height:1.5}.warning{border-left:3px solid #e8c16c;padding:10px 12px;background:#2c281b;color:#e9ddbd;border-radius:6px;font-size:13px;line-height:1.5}.filelabel{display:block;margin-bottom:8px;font-size:14px}.foot{text-align:center;color:#82988d;font-size:12px;padding:16px}
+audio{width:100%;margin-top:10px} .hidden{display:none!important}
+</style>
+</head>
+<body>
+<main>
+<header class="brand"><div class="logo">V</div><div><h1>My Voice AI</h1><p>अपनी आवाज़ • अपनी स्क्रिप्ट</p></div></header>
+<div class="warning">यह पहला इंटरफेस प्रोटोटाइप है। इसमें अभी असली AI voice cloning इंजन जुड़ा नहीं है। आवाज़ की फाइल केवल इस पेज में चुनी जाती है; सर्वर पर अपलोड नहीं होती।</div>
+<section class="card">
+<div class="step">STEP 01</div><h2>अपनी आवाज़ का सैंपल चुनें</h2>
+<p class="hint">अपनी साफ़ रिकॉर्डिंग चुनें। बेहतर परिणाम के लिए शांत जगह में रिकॉर्ड की गई आवाज़ उपयोग करें।</p>
+<label class="filelabel" for="voiceFile">रिकॉर्डिंग फ़ाइल (WAV / MP3 / M4A)</label>
+<input id="voiceFile" type="file" accept="audio/*">
+<div id="voiceStatus" class="status">अभी कोई फ़ाइल नहीं चुनी गई।</div>
+<audio id="voicePreview" controls class="hidden"></audio>
+</section>
+<section class="card">
+<div class="step">STEP 02</div><h2>हिंदी टेक्स्ट लिखें</h2>
+<p class="hint">अपनी वीडियो स्क्रिप्ट यहाँ पेस्ट करें।</p>
+<textarea id="script" maxlength="5000" placeholder="नमस्कार दोस्तों, स्वागत है आपका हमारे चैनल पर..."></textarea>
+<div class="status"><span id="count">0</span>/5000 अक्षर</div>
+</section>
+<section class="card">
+<div class="step">STEP 03</div><h2>आवाज़ जनरेट करें</h2>
+<p class="hint">यह बटन अभी सेटअप की स्थिति दिखाएगा। असली जनरेशन के लिए अलग AI backend जोड़ना होगा।</p>
+<button class="primary" id="generate">आवाज़ बनाएं</button>
+<div id="result" class="status" role="status">AI इंजन अभी कनेक्ट नहीं है।</div>
+</section>
+<div class="foot">My Voice AI • मोबाइल-फ्रेंडली डेमो</div>
+</main>
+<script>
+const file=document.getElementById('voiceFile'), status=document.getElementById('voiceStatus'), preview=document.getElementById('voicePreview'), script=document.getElementById('script'), count=document.getElementById('count');
+let audioUrl=null;
+file.addEventListener('change',()=>{
+ const f=file.files&&file.files[0];
+ if(audioUrl){URL.revokeObjectURL(audioUrl);audioUrl=null}
+ if(!f){status.textContent='अभी कोई फ़ाइल नहीं चुनी गई।';preview.classList.add('hidden');return}
+ status.textContent=`चुनी गई फ़ाइल: ${f.name} (${(f.size/1024/1024).toFixed(1)} MB)`;
+ audioUrl=URL.createObjectURL(f);preview.src=audioUrl;preview.classList.remove('hidden');
+});
+script.addEventListener('input',()=>count.textContent=script.value.length);
+document.getElementById('generate').addEventListener('click',()=>{
+ const result=document.getElementById('result');
+ if(!file.files.length){result.textContent='पहले अपनी आवाज़ की रिकॉर्डिंग चुनें।';return}
+ if(!script.value.trim()){result.textContent='पहले हिंदी टेक्स्ट लिखें।';return}
+ result.textContent='इंटरफेस सही काम कर रहा है, लेकिन असली AI voice cloning backend अभी जोड़ा नहीं गया है। सिर्फ इस HTML फ़ाइल से क्लोन आवाज़ नहीं बनेगी।';
+});
+</script>
+</body>
+</html>
