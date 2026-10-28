@@ -1,4 +1,5 @@
-flask
+fastapi
+uvicorn
 gunicorn
 httpx
-fastapi
+flask
